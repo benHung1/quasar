@@ -29,14 +29,15 @@
       </div>
     </form>
     <q-table title="" :rows="rows" :columns="columns" row-key="name">
-      <template v-slot:body-cell="props">
-        <q-td :props="props">
-          <q-td> {{ props.row.name }} </q-td>
+      <template v-slot:body-cell-icon="props">
+        <q-td :props="props" class="iconWrapper">
           <q-icon
-            v-if="shouldShowIcon(props.row, rows)"
-            name="fa-regular fa-bell"
+            class="icon editIcon"
+            name="fa-regular fa-pen-to-square"
             size="lg"
+            @click="handleEdit(rows)"
           />
+          <q-icon class="icon deleteIcon" name="fa-solid fa-trash"></q-icon>
         </q-td>
       </template>
     </q-table>
@@ -90,10 +91,6 @@ const columns = [
   },
 ];
 
-function shouldShowIcon(row, allRows) {
-  return row === allRows[allRows.length - 1];
-}
-
 const validateKeyPress = (event) => {
   const char = String.fromCharCode(event.keyCode);
   const isDigit = /^\d+$/.test(char);
@@ -122,7 +119,7 @@ const onSubmit = () => {
     $q.notify({
       icon: "done",
       color: "positive",
-      message: "成功新增",
+      message: "新增成功",
     });
 
     onReset();
@@ -136,4 +133,18 @@ const onReset = () => {
   nameRef.value.resetValidation();
   ageRef.value.resetValidation();
 };
+
+const handleEdit = (rows) => {
+  console.log(rows);
+};
 </script>
+
+<style scoped>
+.iconWrapper {
+  display: flex;
+  gap: 1rem;
+}
+.icon {
+  font-size: 1.2rem !important;
+}
+</style>
