@@ -1,7 +1,7 @@
 <template>
   <div class="q-pa-md" style="max-width: 300px">
     <form
-      @submit.prevent.stop="onSubmit"
+      @submit.prevent.stop="onSubmit()"
       @reset.prevent.stop="onReset"
       class="q-gutter-md"
     >
@@ -24,10 +24,17 @@
         @keypress="validateKeyPress"
       />
       <div>
-        <q-btn label="新增" type="submit" color="primary" />
+        <q-btn
+          :label="isEditing ? '編輯' : '新增'"
+          type="submit"
+          color="primary"
+        />
         <q-btn label="清除" type="reset" color="primary" flat class="q-ml-sm" />
       </div>
     </form>
+
+    <!-- table -->
+
     <q-table title="" :rows="rows" :columns="columns" row-key="name">
       <template v-slot:body-cell-icon="props">
         <q-td :props="props" class="iconWrapper">
@@ -35,9 +42,13 @@
             class="icon editIcon"
             name="fa-regular fa-pen-to-square"
             size="lg"
-            @click="handleEdit(rows)"
+            @click="() => handleEdit($event, props)"
           />
-          <q-icon class="icon deleteIcon" name="fa-solid fa-trash"></q-icon>
+          <q-icon
+            class="icon deleteIcon"
+            name="fa-solid fa-trash"
+            @click="alert($event, props)"
+          ></q-icon>
         </q-td>
       </template>
     </q-table>
@@ -58,7 +69,12 @@ const ageRef = ref(null);
 
 const rows = ref([]);
 
+const editedItemId = ref(null);
+
+const isEditing = ref(false);
+
 const nameRules = [(val) => (val && val.length > 0) || "請勿空白"];
+
 const ageRules = [
   (val) => (val !== null && val !== "") || "請輸入您的年齡",
   (val) => (val > 0 && val < 100) || "請輸入您真實的年齡",
@@ -107,19 +123,33 @@ const onSubmit = () => {
     $q.notify({
       icon: "error",
       color: "negative",
-      message: "請確認您輸入資料",
+      message: "請確認您輸入的資料",
     });
   } else {
-    rows.value.push({
-      name: name.value,
-      age: age.value,
-    });
-    rows.value.reverse();
+    // switch isEditing ?
+
+    switch (true) {
+      case isEditing.value:
+        // 下面這裡按下按鈕之後 前面是更新後的值，該怎麼重新賦值到該row內?
+
+        // console.log(name.value, Object.values(editedItemId.value[0])[0]);
+
+        break;
+
+      default:
+        rows.value.push({
+          name: name.value,
+          age: age.value,
+          id: uniqueID(),
+        });
+        rows.value.reverse();
+        break;
+    }
 
     $q.notify({
       icon: "done",
       color: "positive",
-      message: "新增成功",
+      message: `${isEditing.value ? "編輯成功" : "新增成功"}`,
     });
 
     onReset();
@@ -132,10 +162,32 @@ const onReset = () => {
 
   nameRef.value.resetValidation();
   ageRef.value.resetValidation();
+
+  isEditing.value = false;
+  editedItemId.value = null;
 };
 
-const handleEdit = (rows) => {
-  console.log(rows);
+const handleEdit = (event, { row }) => {
+  name.value = row.name;
+  age.value = row.age;
+  isEditing.value = true;
+  editedItemId.value = rows.value;
+};
+
+const alert = (event, { row }) => {
+  $q.dialog({
+    title: "提示",
+    message: "是否確定刪除該筆資料?",
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    console.log(row, rows.value.splice(row));
+    // 刪除該筆row
+  });
+};
+
+const uniqueID = () => {
+  return Math.floor(Math.random() * Date.now());
 };
 </script>
 
@@ -143,8 +195,10 @@ const handleEdit = (rows) => {
 .iconWrapper {
   display: flex;
   gap: 1rem;
+  align-items: center;
 }
 .icon {
   font-size: 1.2rem !important;
+  cursor: pointer;
 }
 </style>
